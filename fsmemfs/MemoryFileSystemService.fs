@@ -86,7 +86,7 @@ type MemoryFileSystemService() =
         | CommandLineError err ->
             Service.Log(Service.EVENTLOG_ERROR_TYPE, (sprintf "fsmemfs: %s" err))
             Service.Log(Service.EVENTLOG_INFORMATION_TYPE,
-                        sprintf "F# Memory File System v%s based on WinFsp"
+                        sprintf "F# Memory File System v%s"
                             (Assembly.GetExecutingAssembly().GetName().Version.ToString()))
 
             let message = """
