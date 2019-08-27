@@ -13,6 +13,7 @@ Options:
   -v           [optional] enable verbose log
   -l VALUE     [optional] a path to a file where fsmemfs should write logs
   -D VALUE     [optional] a path to a file where WinFsp should write debug logs
+  -F VALUE     [optional] a filesystem name, if not set it will be 'fsmemfs'
 ```
 
 To create a new G: volume, simply run: `fsmemfs -m G:`.
