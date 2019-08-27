@@ -404,6 +404,7 @@ type MemoryFileSystem() =
 
     override this.Init(host) =
         let host = host :?> FileSystemHost
+        host.FileSystemName <- "FSMEMFS"
         host.SectorSize <- MEMFS_SECTOR_SIZE
         host.SectorsPerAllocationUnit <- MEMFS_SECTORS_PER_ALLOCATION_UNIT
         host.VolumeCreationTime <- uint64 (DateTime.Now.ToFileTimeUtc())
