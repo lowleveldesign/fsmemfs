@@ -16,6 +16,7 @@ type FileNodeProperties = {
     FileSize : uint64
     AllocationSize : uint64
     FileData : byte array
+    FileIndex : uint64
  }
 
 [<NoComparison>]

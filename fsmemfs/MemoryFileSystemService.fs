@@ -13,6 +13,7 @@ type ServiceArgs = {
     EnableVerboseLog : bool
     LogPath : string option
     DriverLogPath : string option
+    FileSystemName : string
  }
 
 type MemoryFileSystemService() =
@@ -58,6 +59,9 @@ type MemoryFileSystemService() =
             EnableVerboseLog = parsedArgs.ContainsKey("v")
             LogPath = getArgVal parsedArgs "l"
             DriverLogPath = getArgVal parsedArgs "D"
+            FileSystemName = match getArgVal parsedArgs "F" with
+                             | Some name -> name
+                             | None -> "fsmemfs"
         }
 
     override this.OnStart(args : string array) =
@@ -78,7 +82,7 @@ type MemoryFileSystemService() =
                 if FileSystemHost.SetDebugLogFile(args.DriverLogPath.Value) < 0 then
                     raise (CommandLineError "Cannot open driver log file.")
             
-            host <- new FileSystemHost(MemoryFileSystem())
+            host <- new FileSystemHost(MemoryFileSystem(args.FileSystemName))
 
             if host.Mount(args.MountPoint, null, true, debugFlags) < 0 then
                 raise (IOException("Mounting file system failed"))
@@ -103,6 +107,7 @@ Options:
   -v           [optional] enable verbose log
   -l VALUE     [optional] a path to a file where fsmemfs should write logs
   -D VALUE     [optional] a path to a file where WinFsp should write debug logs
+  -F VALUE     [optional] a filesystem name, if not set it will be 'fsmemfs'
 """
             Service.Log(Service.EVENTLOG_ERROR_TYPE, message)
             reraise()

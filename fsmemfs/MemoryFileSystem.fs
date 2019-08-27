@@ -8,7 +8,7 @@ open System.Runtime.InteropServices
 
 type FspFileInfo = Fsp.Interop.FileInfo
 
-type MemoryFileSystem() =
+type MemoryFileSystem(fileSystemName : string) =
     inherit FileSystemBase()
 
     let className = typedefof<MemoryFileSystem>.Name
@@ -25,6 +25,8 @@ type MemoryFileSystem() =
                                   FileAttributes = uint32 FileAttributes.Directory },
                                   Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase)))
     let fileTree = FileTree(rootNode)
+    
+    let mutable globalFileIndex = 1UL
 
     (* ********************************************* *
      *                  HELPERS                      *
@@ -42,7 +44,7 @@ type MemoryFileSystem() =
                            LastWriteTime = props.LastModifiedFileTimeUtc,
                            ChangeTime = props.LastModifiedFileTimeUtc,
                            ReparseTag = 0u,
-                           IndexNumber = 0UL,
+                           IndexNumber = fileProps.FileIndex,
                            HardLinks = 0u
                        )
         | FolderNode(props, _) ->
@@ -66,7 +68,12 @@ type MemoryFileSystem() =
                     let data = Array.zeroCreate (int32 newSize)
                     let len = int32 (min newSize fileProps.AllocationSize)
                     Array.Copy(fileProps.FileData, data, len)
-                    let node = FileNode (props, { FileData = data; FileSize = uint64 len; AllocationSize = newSize })
+                    let node = FileNode (props, {
+                        FileData = data
+                        FileSize = uint64 len
+                        AllocationSize = newSize
+                        FileIndex = fileProps.FileIndex
+                    })
                     Ok node
                 with
                 | :? OutOfMemoryException ->
@@ -141,11 +148,17 @@ type MemoryFileSystem() =
             fileInfo <- getFileInfo node
             FileSystemBase.STATUS_SUCCESS
         else
-            let node = FileNode (props, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+            let node = FileNode (props, {
+                FileSize = 0UL
+                AllocationSize = 0UL
+                FileData = [||]
+                FileIndex = globalFileIndex
+            })
             match setFileSize (node, allocationSize, true) with
             | Ok node ->
                 fileTree.AddOrUpdateNode path node
                 fileInfo <- getFileInfo node
+                globalFileIndex <- globalFileIndex + 1UL
                 FileSystemBase.STATUS_SUCCESS
             | Error err -> err
 
@@ -404,7 +417,7 @@ type MemoryFileSystem() =
 
     override this.Init(host) =
         let host = host :?> FileSystemHost
-        host.FileSystemName <- "FSMEMFS"
+        host.FileSystemName <- fileSystemName
         host.SectorSize <- MEMFS_SECTOR_SIZE
         host.SectorsPerAllocationUnit <- MEMFS_SECTORS_PER_ALLOCATION_UNIT
         host.VolumeCreationTime <- uint64 (DateTime.Now.ToFileTimeUtc())
@@ -423,10 +436,8 @@ type MemoryFileSystem() =
     override this.GetVolumeInfo(volumeInfo) =
         Logging.logVerbose className "GetVolumeInfo" ""
 
-        // TODO: next version
         volumeInfo.TotalSize <- maxFileNodes * uint64 maxFileSize;
         volumeInfo.FreeSize <- volumeInfo.TotalSize //(maxFileNodes - FileNodeMap.Count()) * (UInt64)MaxFileSize;
-        //VolumeInfo.SetVolumeLabel(VolumeLabel);
         FileSystemBase.STATUS_SUCCESS
 
     override this.CanDelete(_, fileDesc, _) =

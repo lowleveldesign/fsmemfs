@@ -7,18 +7,20 @@ open System
 open System.Collections.Generic
 open System.IO
 
+let fileProps = { FileSize = 0UL; AllocationSize = 0UL; FileData = [||]; FileIndex = 0UL }
+
 let createSampleTree() =
     let aNodes = [
                     "aa", FileNode ({ Name = "aa"
                                       CreatedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                                       LastModifiedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                                       FileAttributes = uint32 FileAttributes.Archive
-                                    }, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+                                    }, fileProps)
                     "ab", FileNode ({ Name = "ab"
                                       CreatedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                                       LastModifiedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                                       FileAttributes = uint32 FileAttributes.Archive
-                                    }, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+                                    }, fileProps)
                  ] |> dict |> Dictionary
 
     let nodes = [
@@ -104,7 +106,7 @@ let ``Add and update a node in a tree``() =
                               CreatedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               LastModifiedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               FileAttributes = uint32 FileAttributes.Archive
-                            }, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+                            }, fileProps)
     tree.AddOrUpdateNode "b/ba/baa/baaa" newFile
     tree.FindNode "b/ba/baa/baaa" |> should equal (Some newFile)
 
@@ -112,7 +114,7 @@ let ``Add and update a node in a tree``() =
                               CreatedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               LastModifiedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               FileAttributes = uint32 FileAttributes.Archive
-                            }, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+                            }, fileProps)
     tree.AddOrUpdateNode "b/ba/baa/baaa" newFile
     tree.FindNode "b/ba/baa/baaa" |> should equal (Some newFile)
 
@@ -124,7 +126,7 @@ let ``Remove a node from a tree``() =
                               CreatedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               LastModifiedFileTimeUtc = uint64 (DateTime.Now.ToFileTimeUtc())
                               FileAttributes = uint32 FileAttributes.Archive
-                            }, { FileSize = 0UL; AllocationSize = 0UL; FileData = [||] })
+                            }, fileProps)
     tree.AddOrUpdateNode "b/ba/baa/baaa" newFile
     tree.FindNode "b/ba/baa/baaa" |> should equal (Some newFile)
     tree.RemoveNode "b/ba/baa" |> should be True
